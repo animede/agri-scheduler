@@ -1,0 +1,16 @@
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.status-ok {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+.status-error {
+  color: #c62828;
+  font-weight: bold;
+}

@@ -1,0 +1,14 @@
+[project]
+name = "agri-scheduler-backend"
+version = "0.1.0"
+description = "農場作付け管理システム backend (FastAPI)"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.116.0",
+    "fastapi>=0.139.0",
+    "pydantic>=2.13.4",
+    "python-dotenv>=1.2.2",
+    "python-multipart>=0.0.32",
+    "sqlalchemy>=2.0.51",
+    "uvicorn[standard]>=0.50.0",
+]
