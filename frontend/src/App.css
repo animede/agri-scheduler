@@ -90,13 +90,19 @@ button[type='submit'] {
   font-size: 0.9em;
 }
 
-.entity-form input {
+.entity-form input,
+.entity-form select,
+.entity-form textarea {
   font: inherit;
   padding: 0.35rem 0.5rem;
   border-radius: 4px;
   border: 1px solid var(--border, #e5e4e7);
   background: var(--bg, #fff);
   color: inherit;
+}
+
+.entity-form textarea {
+  resize: vertical;
 }
 
 .orientation-fieldset {

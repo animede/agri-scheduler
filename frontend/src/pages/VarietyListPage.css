@@ -1,0 +1,65 @@
+.variety-toolbar {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.variety-search {
+  font: inherit;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--border, #e5e4e7);
+  background: var(--bg, #fff);
+  color: inherit;
+  flex: 1;
+  min-width: 200px;
+}
+
+.variety-card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.variety-card {
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.variety-card-main {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 1rem;
+  cursor: pointer;
+}
+
+.variety-card-main:hover {
+  background: var(--accent-bg, rgba(170, 59, 255, 0.06));
+}
+
+.variety-card-main h2 {
+  margin: 0 0 0.3rem;
+  font-size: 1.15rem;
+}
+
+.variety-my-region-summary {
+  margin: 0.2rem 0 0;
+  font-weight: bold;
+}
+
+.variety-card .entity-form {
+  margin: 0;
+  border: none;
+  border-top: 1px solid var(--border, #e5e4e7);
+  border-radius: 0;
+}

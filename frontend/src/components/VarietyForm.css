@@ -1,0 +1,40 @@
+.new-crop-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.calendar-fieldset {
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 6px;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.calendar-tabs {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.calendar-tab {
+  font-size: 0.85em;
+  padding: 0.3rem 0.6rem;
+}
+
+.calendar-tab--active {
+  border-color: var(--accent, #aa3bff);
+  background: var(--accent-bg, rgba(170, 59, 255, 0.1));
+}
+
+.calendar-tab--mine {
+  font-weight: bold;
+}
+
+.calendar-tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}

@@ -1,0 +1,12 @@
+.climate-zone-fieldset {
+  max-width: 640px;
+}
+
+.climate-zone-option {
+  align-items: flex-start !important;
+}
+
+.settings-saved-message {
+  color: #2e7d32;
+  align-self: center;
+}

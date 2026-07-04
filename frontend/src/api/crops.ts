@@ -1,7 +1,11 @@
-import { apiGet } from './client'
-import type { Crop } from './types'
+import { apiDelete, apiGet, apiPost, apiPut } from './client'
+import type { Crop, CropCreate, CropUpdate } from './types'
 
 const BASE = '/api/crops'
 
-// Phase2では作物マスタの参照(科の解決)のみ必要。登録・編集フォームはPhase3で実装する。
 export const listCrops = (): Promise<Crop[]> => apiGet<Crop[]>(BASE)
+export const getCrop = (id: number): Promise<Crop> => apiGet<Crop>(`${BASE}/${id}`)
+export const createCrop = (data: CropCreate): Promise<Crop> => apiPost<Crop>(BASE, data)
+export const updateCrop = (id: number, data: CropUpdate): Promise<Crop> =>
+  apiPut<Crop>(`${BASE}/${id}`, data)
+export const deleteCrop = (id: number): Promise<void> => apiDelete(`${BASE}/${id}`)

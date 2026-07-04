@@ -58,11 +58,30 @@ export interface Crop {
 export type CropCreate = Omit<Crop, 'id'>
 export type CropUpdate = Partial<CropCreate>
 
+// 地域帯(寒地/温暖地/暖地)ごとの時期情報。種袋裏面の栽培歴表は地域帯別に
+// 種蒔き・植え付け・収穫の時期が分かれて記載されることが多い(spec.md 4.2)ため、
+// 自由入力の文字列(例: "3月上旬〜4月上旬")として保持する。
+export interface RegionCalendar {
+  sowing?: string // 種蒔き時期
+  transplanting?: string // 植え付け時期
+  harvest?: string // 収穫時期
+}
+
+export type ClimateZone = 'cold' | 'temperate' | 'warm'
+
+// バックエンドは自由形式JSONカラム(dict[str, Any] | None)として保存するため、
+// スキーマ変更は不要。フロント側でこの形状を前提として扱う。
+export interface CultivationCalendar {
+  cold?: RegionCalendar // 寒地
+  temperate?: RegionCalendar // 温暖地
+  warm?: RegionCalendar // 暖地
+}
+
 export interface Variety {
   id: number
   crop_id: number
   name: string
-  cultivation_calendar: Record<string, unknown> | null
+  cultivation_calendar: CultivationCalendar | null
   seedling_days: number | null
   days_to_harvest: number | null
   plant_spacing_cm: number | null
