@@ -33,3 +33,4 @@ data/db/*.sqlite3
 .vscode/
 .idea/
 *.log
+.claude/
