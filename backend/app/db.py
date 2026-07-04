@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
@@ -33,6 +33,15 @@ engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {},
 )
+
+if DATABASE_URL.startswith("sqlite"):
+    # SQLiteはデフォルトで外部キー制約が無効なため、接続ごとに有効化する。
+    # これにより ondelete="CASCADE" や参照中の行の削除防止(RESTRICT)がDBレベルで機能する。
+    @event.listens_for(engine, "connect")
+    def _enable_sqlite_fk(dbapi_connection, connection_record):  # noqa: ANN001
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
