@@ -1,0 +1,48 @@
+.bed-map {
+  background: var(--map-bg, #f7f6f2);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  min-height: 320px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bed-map {
+    --map-bg: #1c1d24;
+  }
+}
+
+.bed-map-empty {
+  padding: 2rem;
+  text-align: center;
+  border: 1px dashed var(--border, #e5e4e7);
+  border-radius: 8px;
+  color: var(--text, #6b6375);
+}
+
+.bed-rect {
+  stroke: #555;
+  stroke-width: 2;
+  cursor: pointer;
+  fill: none;
+}
+
+.bed-rect--selected {
+  stroke: var(--accent, #aa3bff);
+  stroke-width: 3;
+}
+
+.segment-rect {
+  stroke: #ffffff;
+  stroke-width: 1.5;
+  cursor: pointer;
+}
+
+.segment-rect--selected {
+  stroke: var(--accent, #aa3bff);
+  stroke-width: 3;
+}
+
+.bed-label {
+  font-size: 12px;
+  fill: var(--text, #6b6375);
+}

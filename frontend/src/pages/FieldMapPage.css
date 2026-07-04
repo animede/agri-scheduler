@@ -1,0 +1,115 @@
+.field-map-header {
+  margin-bottom: 1rem;
+}
+
+.field-map-header h1 {
+  margin: 0.3rem 0;
+}
+
+.field-map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 800px) {
+  .field-map-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-map-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.map-legend-note {
+  margin: 0;
+}
+
+.map-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.selected-bed-panel {
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.selected-bed-panel h3 {
+  margin: 0;
+}
+
+.segment-manager {
+  border-top: 1px solid var(--border, #e5e4e7);
+  padding-top: 0.6rem;
+}
+
+.segment-manager h4 {
+  margin: 0 0 0.4rem;
+}
+
+.segment-list {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.segment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.segment-row:hover {
+  border-color: var(--accent, #aa3bff);
+}
+
+.segment-row--selected {
+  border-color: var(--accent, #aa3bff);
+  background: var(--accent-bg, rgba(170, 59, 255, 0.1));
+}
+
+.segment-row-actions {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.segment-detail-panel {
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.segment-detail-panel h4,
+.segment-detail-panel h5 {
+  margin: 0 0 0.3rem;
+}
+
+.history-list {
+  margin: 0;
+  padding-left: 1.2rem;
+}

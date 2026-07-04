@@ -1,16 +1,133 @@
-.app {
-  max-width: 640px;
+/* Vite初期テンプレートの#rootスタイル(幅固定・中央寄せ)はこのアプリのレイアウトに合わないため上書きする */
+#root {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  text-align: left;
+  border-inline: none;
+  min-height: 100svh;
+  display: block;
+  box-sizing: border-box;
+}
+
+main {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
-  text-align: center;
+  padding: 1.5rem;
+  box-sizing: border-box;
 }
 
-.status-ok {
-  color: #2e7d32;
-  font-weight: bold;
+h1 {
+  font-size: 32px;
+  margin: 0 0 0.5rem;
 }
 
-.status-error {
+.muted {
+  color: var(--text, #6b6375);
+  font-size: 0.9em;
+}
+
+.form-error {
   color: #c62828;
   font-weight: bold;
+}
+
+.form-warning {
+  color: #b26a00;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid var(--border, #e5e4e7);
+  background: var(--bg, #fff);
+  color: var(--text-h, #08060d);
+  padding: 0.4rem 0.9rem;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent, #aa3bff);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+button[type='submit'] {
+  background: var(--accent, #aa3bff);
+  color: #fff;
+  border-color: var(--accent, #aa3bff);
+}
+
+.danger-button {
+  color: #c62828;
+  border-color: #c62828;
+}
+
+.entity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  text-align: left;
+}
+
+.entity-form--compact {
+  padding: 0.6rem;
+  margin-bottom: 0.6rem;
+  background: var(--code-bg, #f4f3ec);
+}
+
+.entity-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.9em;
+}
+
+.entity-form input {
+  font: inherit;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid var(--border, #e5e4e7);
+  background: var(--bg, #fff);
+  color: inherit;
+}
+
+.orientation-fieldset {
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.5rem;
+}
+
+.radio-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.4rem !important;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.panel-header-actions {
+  display: flex;
+  gap: 0.4rem;
 }
