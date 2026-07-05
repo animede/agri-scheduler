@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { getField } from '../api/fields'
 import { listBeds } from '../api/beds'
 import { listBedSegments } from '../api/bedSegments'
@@ -34,6 +34,7 @@ type ViewMode = 'map' | 'calendar'
 function FieldMapPage() {
   const { fieldId: fieldIdParam } = useParams<{ fieldId: string }>()
   const fieldId = Number(fieldIdParam)
+  const [searchParams] = useSearchParams()
 
   const [field, setField] = useState<Field | null>(null)
   const [beds, setBeds] = useState<Bed[]>([])
@@ -56,7 +57,12 @@ function FieldMapPage() {
   // フェーズ7: 圃場マップ⇔栽培カレンダーの表示切り替えと、カレンダーの対象年。
   // 選択状態(selectedBedId/selectedSegmentId)は両モードで共有するため、モード切替や
   // 年切替をしてもリセットしない。
-  const [viewMode, setViewMode] = useState<ViewMode>('map')
+  // トップページの「栽培カレンダー」ショートカットカードから ?view=calendar 付きで
+  // 遷移してきた場合は、初期表示から栽培カレンダータブを開いた状態にする
+  // (以降のタブボタンでの切り替え動作はuseStateのまま、変更なし)。
+  const [viewMode, setViewMode] = useState<ViewMode>(() =>
+    searchParams.get('view') === 'calendar' ? 'calendar' : 'map',
+  )
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR)
 
   // フェーズ8: 「次年度にロール」レビューモーダルの開閉状態。

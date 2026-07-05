@@ -1,3 +1,86 @@
+.field-list-hero {
+  margin-bottom: 1.4rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--hero-bg-a, #fff7e6) 0%, var(--hero-bg-b, #eef6e9) 100%);
+  border: 1px solid var(--border, #e5e4e7);
+}
+
+@media (prefers-color-scheme: dark) {
+  .field-list-hero {
+    --hero-bg-a: #2a2718;
+    --hero-bg-b: #1c241c;
+  }
+}
+
+.field-list-hero h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.6rem;
+}
+
+.field-list-hero p {
+  margin: 0;
+}
+
+.shortcut-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+.shortcut-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e5e4e7);
+  background: var(--bg, #fff);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.shortcut-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  border-color: var(--accent, #aa3bff);
+}
+
+.shortcut-card--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.shortcut-card--disabled:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border, #e5e4e7);
+}
+
+.shortcut-card-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.shortcut-card-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.shortcut-card-desc {
+  font-size: 0.85rem;
+  color: var(--text, #6b6375);
+}
+
+.field-list-section h2 {
+  font-size: 1.3rem;
+  margin: 0 0 0.8rem;
+}
+
 .field-card-list {
   list-style: none;
   margin: 0;
@@ -9,11 +92,12 @@
 
 .field-card {
   border: 1px solid var(--border, #e5e4e7);
-  border-radius: 8px;
+  border-radius: 14px;
   padding: 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .field-card-link {

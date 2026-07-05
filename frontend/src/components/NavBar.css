@@ -1,18 +1,47 @@
 .nav-bar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.7rem 1.5rem;
+  min-height: 3.2rem;
   border-bottom: 1px solid var(--border, #e5e4e7);
+  overflow: hidden;
+  background: var(--nav-bg, #fdfaf3);
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav-bar {
+    --nav-bg: #201f28;
+  }
+}
+
+/* 装飾用の野菜アイコン背景。クリックを妨げないよう最背面 + pointer-events: none。 */
+.nav-bar-decor {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.nav-bar-decor-icon {
+  position: absolute;
+  line-height: 1;
+  user-select: none;
 }
 
 .nav-bar-title {
+  position: relative;
+  z-index: 1;
   font-weight: bold;
 }
 
 .nav-bar-links {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 1rem;
 }
