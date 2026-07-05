@@ -33,6 +33,7 @@ def _post_image(client, filename: str = "seed_pack.png", content_type: str = "im
 
 def test_missing_api_key_returns_503(client, monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("AI_VISION_BASE_URL", raising=False)
 
     resp = _post_image(client)
 
