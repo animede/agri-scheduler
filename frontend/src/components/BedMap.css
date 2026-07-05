@@ -46,3 +46,22 @@
   font-size: 12px;
   fill: var(--text, #6b6375);
 }
+
+/* 輪作リスク警告バッジ(区画の右上に重ねて表示する丸+「!」)。クリックすると区画選択と同じ扱い。 */
+.segment-warning {
+  cursor: pointer;
+}
+
+.segment-warning-badge {
+  fill: #d9534f;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.segment-warning-icon {
+  fill: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  pointer-events: none;
+  user-select: none;
+}

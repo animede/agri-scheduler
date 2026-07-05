@@ -112,4 +112,35 @@
 .history-list {
   margin: 0;
   padding-left: 1.2rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.9em;
+}
+
+/* 連作障害チェックの非ブロッキング警告バナー(黄〜赤系のアラート)。保存はブロックしない。 */
+.rotation-warning {
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #f0ad4e;
+  background: rgba(240, 173, 78, 0.15);
+  color: #8a5a00;
+  font-size: 0.9em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rotation-warning {
+    border-color: #f0ad4e;
+    background: rgba(240, 173, 78, 0.12);
+    color: #f0ad4e;
+  }
 }

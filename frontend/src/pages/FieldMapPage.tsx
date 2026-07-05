@@ -16,6 +16,8 @@ import SegmentDetailPanel from '../components/SegmentDetailPanel'
 import { pickCurrentPlanting } from '../utils/planting'
 import { resolveVariety } from '../utils/resolve'
 import { colorForCropFamily } from '../utils/cropFamilyColor'
+import { checkCurrentRotationRisk } from '../utils/rotation'
+import type { RotationCheckResult } from '../utils/rotation'
 import './FieldMapPage.css'
 
 const CURRENT_YEAR = new Date().getFullYear()
@@ -135,6 +137,18 @@ function FieldMapPage() {
     [plantingsBySegment, lookups],
   )
 
+  // 区画の「現在の作付け」が、それより前の作付け履歴と輪作年限に抵触していないかを判定する
+  // (圃場マップ上の警告アイコン表示用)。
+  const getSegmentRotationRisk = useCallback(
+    (segment: BedSegment): RotationCheckResult => {
+      const segPlantings = plantingsBySegment.get(segment.id) ?? []
+      const current = pickCurrentPlanting(segPlantings, CURRENT_YEAR)
+      if (!current) return { warning: false }
+      return checkCurrentRotationRisk(segPlantings, current, lookups)
+    },
+    [plantingsBySegment, lookups],
+  )
+
   const selectedBed = fieldBeds.find((b) => b.id === selectedBedId) ?? null
   const selectedBedSegments = selectedBed ? segmentsByBed.get(selectedBed.id) ?? [] : []
   const selectedSegment = segments.find((s) => s.id === selectedSegmentId) ?? null
@@ -190,6 +204,7 @@ function FieldMapPage() {
             beds={fieldBeds}
             segmentsByBed={segmentsByBed}
             getSegmentColor={getSegmentColor}
+            getSegmentRotationRisk={getSegmentRotationRisk}
             selectedBedId={selectedBedId}
             selectedSegmentId={selectedSegmentId}
             onSelectBed={handleSelectBed}
@@ -279,9 +294,11 @@ function FieldMapPage() {
             <SegmentDetailPanel
               segment={selectedSegment}
               plantings={selectedSegmentPlantings}
+              varieties={varieties}
               lookups={lookups}
               currentYear={CURRENT_YEAR}
               onClose={() => setSelectedSegmentId(null)}
+              onChanged={() => void reloadMapData()}
             />
           )}
 

@@ -1,12 +1,15 @@
 import type { Bed, BedSegment } from '../api/types'
 import { bedRect, boundingBox, segmentRect } from '../utils/geometry'
 import { EMPTY_SEGMENT_COLOR } from '../utils/cropFamilyColor'
+import type { RotationCheckResult } from '../utils/rotation'
 import './BedMap.css'
 
 interface BedMapProps {
   beds: Bed[]
   segmentsByBed: Map<number, BedSegment[]>
   getSegmentColor: (segment: BedSegment) => string | null
+  // 区画の輪作リスクを判定する。warning=trueの場合、区画に警告アイコンを重ねて表示する。
+  getSegmentRotationRisk: (segment: BedSegment) => RotationCheckResult
   selectedBedId: number | null
   selectedSegmentId: number | null
   onSelectBed: (bedId: number) => void
@@ -19,6 +22,7 @@ function BedMap({
   beds,
   segmentsByBed,
   getSegmentColor,
+  getSegmentRotationRisk,
   selectedBedId,
   selectedSegmentId,
   onSelectBed,
@@ -67,22 +71,48 @@ function BedMap({
               const segRect = segmentRect(bed, segment)
               const color = getSegmentColor(segment) ?? EMPTY_SEGMENT_COLOR
               const isSegSelected = segment.id === selectedSegmentId
+              const risk = getSegmentRotationRisk(segment)
+              const width = Math.max(segRect.width, 0)
+              const badgeCx = segRect.x + width - 10
+              const badgeCy = segRect.y + 10
               return (
-                <rect
-                  key={segment.id}
-                  x={segRect.x}
-                  y={segRect.y}
-                  width={Math.max(segRect.width, 0)}
-                  height={Math.max(segRect.height, 0)}
-                  fill={color}
-                  className={`segment-rect${isSegSelected ? ' segment-rect--selected' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onSelectSegment(segment)
-                  }}
-                >
-                  <title>{segment.name ?? `区画#${segment.id}`}</title>
-                </rect>
+                <g key={segment.id}>
+                  <rect
+                    x={segRect.x}
+                    y={segRect.y}
+                    width={width}
+                    height={Math.max(segRect.height, 0)}
+                    fill={color}
+                    className={`segment-rect${isSegSelected ? ' segment-rect--selected' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onSelectSegment(segment)
+                    }}
+                  >
+                    <title>{segment.name ?? `区画#${segment.id}`}</title>
+                  </rect>
+
+                  {risk.warning && (
+                    <g
+                      className="segment-warning"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onSelectSegment(segment)
+                      }}
+                    >
+                      <title>{risk.message}</title>
+                      <circle cx={badgeCx} cy={badgeCy} r={9} className="segment-warning-badge" />
+                      <text
+                        x={badgeCx}
+                        y={badgeCy + 4}
+                        textAnchor="middle"
+                        className="segment-warning-icon"
+                      >
+                        !
+                      </text>
+                    </g>
+                  )}
+                </g>
               )
             })}
 
