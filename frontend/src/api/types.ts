@@ -97,6 +97,26 @@ export interface Variety {
 export type VarietyCreate = Omit<Variety, 'id' | 'created_at' | 'updated_at'>
 export type VarietyUpdate = Partial<VarietyCreate>
 
+// Phase6: `POST /api/ai/analyze-variety-image` のレスポンス
+// (backend/app/api/ai_analysis.py の AnalyzeVarietyImageResponse に対応)。
+// extracted はAIが読み取れた項目のみを含む自由形式のオブジェクト(欠損項目は
+// キーごと省略されうる)ため、Varietyのフィールドを全てOptionalにした形で表す。
+export interface AIExtractedVarietyData {
+  cultivation_calendar?: CultivationCalendar | null
+  seedling_days?: number | null
+  days_to_harvest?: number | null
+  plant_spacing_cm?: number | null
+  row_spacing_cm?: number | null
+  mulch_type?: string | null
+  protection_notes?: string | null
+}
+
+export interface AnalyzeVarietyImageResponse {
+  image_path: string
+  extracted: AIExtractedVarietyData
+  raw_response: string
+}
+
 export type PlantingStatus = '計画' | '育苗中' | '植付済' | '収穫中' | '完了'
 
 export interface Planting {

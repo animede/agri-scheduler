@@ -1,5 +1,6 @@
 """APIルーター一式。"""
 
+from app.api.ai_analysis import router as ai_analysis_router
 from app.api.bed_segments import router as bed_segments_router
 from app.api.beds import router as beds_router
 from app.api.crop_families import router as crop_families_router
@@ -18,6 +19,7 @@ all_routers = [
     bed_segments_router,
     plantings_router,
     tasks_router,
+    ai_analysis_router,
 ]
 
 __all__ = ["all_routers"]

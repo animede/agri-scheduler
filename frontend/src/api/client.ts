@@ -62,3 +62,16 @@ export function apiPut<T>(path: string, body: unknown): Promise<T> {
 export function apiDelete(path: string): Promise<void> {
   return request<void>(path, { method: 'DELETE' })
 }
+
+// multipart/form-data送信用(Phase6: AI画像解析の画像アップロードで使用)。
+// headers を空オブジェクトで上書きし、`Content-Type: application/json` を
+// 付与しないようにする(ブラウザがboundary付きのmultipart/form-dataヘッダーを
+// 自動設定する)。
+export function apiPostForm<T>(path: string, formData: FormData): Promise<T> {
+  return request<T>(path, { method: 'POST', body: formData, headers: {} })
+}
+
+// data/images配下の相対パス(例: "images/xxxx.jpg")から静的配信URLを組み立てる。
+export function buildStaticUrl(relativePath: string): string {
+  return `${API_BASE_URL}/static/${relativePath}`
+}

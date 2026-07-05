@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { analyzeVarietyImage } from '../api/aiAnalysis'
 import { createCrop } from '../api/crops'
 import { createVariety, deleteVariety, updateVariety } from '../api/varieties'
-import { ApiError } from '../api/client'
+import { ApiError, buildStaticUrl } from '../api/client'
 import type {
+  AIExtractedVarietyData,
   ClimateZone,
   Crop,
   CropFamily,
@@ -40,6 +42,35 @@ function regionCalendarFrom(calendar: CultivationCalendar | null, zone: ClimateZ
 
 function isRegionCalendarEmpty(region: RegionCalendar): boolean {
   return !region.sowing?.trim() && !region.transplanting?.trim() && !region.harvest?.trim()
+}
+
+// AI解析結果(反映前)を人間が読める箇条書きに変換する。
+// ユーザーが「反映する」を押す前に、何が上書きされるのかを確認できるようにするため。
+function summarizeExtracted(extracted: AIExtractedVarietyData): string[] {
+  const lines: string[] = []
+  const calendar = extracted.cultivation_calendar
+  if (calendar) {
+    for (const zone of REGION_ORDER) {
+      const region = calendar[zone]
+      if (!region) continue
+      const parts: string[] = []
+      if (region.sowing) parts.push(`種蒔き:${region.sowing}`)
+      if (region.transplanting) parts.push(`植付:${region.transplanting}`)
+      if (region.harvest) parts.push(`収穫:${region.harvest}`)
+      if (parts.length > 0) {
+        lines.push(`${CLIMATE_ZONE_LABELS[zone]}: ${parts.join(' / ')}`)
+      }
+    }
+  }
+  if (extracted.seedling_days != null) lines.push(`育苗日数: ${extracted.seedling_days}日`)
+  if (extracted.days_to_harvest != null) {
+    lines.push(`収穫までの日数目安: ${extracted.days_to_harvest}日`)
+  }
+  if (extracted.plant_spacing_cm != null) lines.push(`株間: ${extracted.plant_spacing_cm}cm`)
+  if (extracted.row_spacing_cm != null) lines.push(`条間: ${extracted.row_spacing_cm}cm`)
+  if (extracted.mulch_type) lines.push(`マルチング種別: ${extracted.mulch_type}`)
+  if (extracted.protection_notes) lines.push(`保温・保湿対策メモ: ${extracted.protection_notes}`)
+  return lines
 }
 
 function VarietyForm({
@@ -81,6 +112,26 @@ function VarietyForm({
   const [mulchType, setMulchType] = useState(initialVariety?.mulch_type ?? '')
   const [protectionNotes, setProtectionNotes] = useState(initialVariety?.protection_notes ?? '')
 
+  // Phase6: AI画像解析(種苗パッケージ画像のアップロード・解析)関連のstate。
+  // sourceImagePath/aiExtractedDataは保存時にVariety.source_image_path/ai_extracted_data
+  // として送信する。AI解析の抽出結果はaiPreviewに一旦保持し、ユーザーが「反映する」を
+  // 押すまでは他のフォームフィールドを書き換えない(spec.md 4.3: 確認ステップの必須化)。
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiPreview, setAiPreview] = useState<{
+    image_path: string
+    extracted: AIExtractedVarietyData
+    raw_response: string
+  } | null>(null)
+  const [sourceImagePath, setSourceImagePath] = useState<string | null>(
+    initialVariety?.source_image_path ?? null,
+  )
+  const [aiExtractedData, setAiExtractedData] = useState<Record<string, unknown> | null>(
+    initialVariety?.ai_extracted_data ?? null,
+  )
+  const [showRawAiData, setShowRawAiData] = useState(false)
+
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -95,6 +146,67 @@ function VarietyForm({
 
   function updateRegionField(zone: ClimateZone, field: keyof RegionCalendar, value: string) {
     setCalendar((prev) => ({ ...prev, [zone]: { ...prev[zone], [field]: value } }))
+  }
+
+  async function handleAnalyzeImage() {
+    if (!imageFile) return
+    setAnalyzing(true)
+    setAiError(null)
+    setAiPreview(null)
+    try {
+      const result = await analyzeVarietyImage(imageFile)
+      setAiPreview(result)
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 503) {
+        // ANTHROPIC_API_KEY未設定 or ネットワーク未接続時のフォールバック(spec.md 5章)。
+        setAiError('AI画像解析は現在利用できません。手動で入力してください。')
+      } else if (err instanceof ApiError) {
+        setAiError(`AI画像解析は現在利用できません。手動で入力してください。(${err.message})`)
+      } else {
+        setAiError('AI画像解析は現在利用できません。手動で入力してください。')
+      }
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
+  // AI解析結果をフォームの各フィールドに反映する。反映後も通常のフォーム入力として
+  // 編集可能なままなので、保存前にユーザーが確認・修正できる(spec.md 4.3)。
+  function handleApplyAiPreview() {
+    if (!aiPreview) return
+    const extracted = aiPreview.extracted
+
+    if (extracted.cultivation_calendar) {
+      setCalendar((prev) => {
+        const next = { ...prev }
+        for (const zone of REGION_ORDER) {
+          const region = extracted.cultivation_calendar?.[zone]
+          if (region) {
+            next[zone] = {
+              sowing: region.sowing ?? prev[zone].sowing,
+              transplanting: region.transplanting ?? prev[zone].transplanting,
+              harvest: region.harvest ?? prev[zone].harvest,
+            }
+          }
+        }
+        return next
+      })
+    }
+    if (extracted.seedling_days != null) setSeedlingDays(String(extracted.seedling_days))
+    if (extracted.days_to_harvest != null) setDaysToHarvest(String(extracted.days_to_harvest))
+    if (extracted.plant_spacing_cm != null) setPlantSpacingCm(String(extracted.plant_spacing_cm))
+    if (extracted.row_spacing_cm != null) setRowSpacingCm(String(extracted.row_spacing_cm))
+    if (extracted.mulch_type) setMulchType(extracted.mulch_type)
+    if (extracted.protection_notes) setProtectionNotes(extracted.protection_notes)
+
+    setSourceImagePath(aiPreview.image_path)
+    setAiExtractedData({ extracted: aiPreview.extracted, raw_response: aiPreview.raw_response })
+    setAiPreview(null)
+    setImageFile(null)
+  }
+
+  function handleDiscardAiPreview() {
+    setAiPreview(null)
   }
 
   async function handleAddCrop(e: FormEvent) {
@@ -163,8 +275,8 @@ function VarietyForm({
         row_spacing_cm: rowSpacingCm.trim() ? Number(rowSpacingCm) : null,
         mulch_type: mulchType.trim() || null,
         protection_notes: protectionNotes.trim() || null,
-        source_image_path: initialVariety?.source_image_path ?? null,
-        ai_extracted_data: initialVariety?.ai_extracted_data ?? null,
+        source_image_path: sourceImagePath,
+        ai_extracted_data: aiExtractedData,
       }
       const saved = initialVariety
         ? await updateVariety(initialVariety.id, payload)
@@ -262,6 +374,81 @@ function VarietyForm({
         品種名
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="例: 桃太郎" />
       </label>
+
+      <fieldset className="ai-image-fieldset">
+        <legend>種苗パッケージ画像からAI解析(任意)</legend>
+
+        {sourceImagePath && !aiPreview && (
+          <div className="variety-image-preview">
+            <img
+              src={buildStaticUrl(sourceImagePath)}
+              alt="登録済みの種苗パッケージ画像"
+              className="variety-image-thumb"
+            />
+            <span className="muted">登録済みの画像</span>
+          </div>
+        )}
+
+        <label className="ai-image-file-label">
+          画像ファイルを選択
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              setImageFile(e.target.files?.[0] ?? null)
+              setAiError(null)
+            }}
+          />
+        </label>
+
+        <div className="form-actions">
+          <button
+            type="button"
+            onClick={() => void handleAnalyzeImage()}
+            disabled={!imageFile || analyzing}
+          >
+            {analyzing ? 'AI解析中...' : 'AIで解析'}
+          </button>
+        </div>
+
+        {aiError && <p className="form-error">{aiError}</p>}
+
+        {aiPreview && (
+          <div className="ai-preview-panel">
+            <p>
+              AI解析結果をフォームに反映しますか？(既存の入力は上書きされます。反映後も保存前に
+              各項目を確認・修正できます)
+            </p>
+            <ul className="ai-preview-summary">
+              {summarizeExtracted(aiPreview.extracted).map((line, idx) => (
+                <li key={idx}>{line}</li>
+              ))}
+              {summarizeExtracted(aiPreview.extracted).length === 0 && (
+                <li className="muted">読み取れた項目がありませんでした</li>
+              )}
+            </ul>
+            <div className="form-actions">
+              <button type="button" onClick={handleApplyAiPreview}>
+                反映する
+              </button>
+              <button type="button" onClick={handleDiscardAiPreview}>
+                破棄する
+              </button>
+            </div>
+          </div>
+        )}
+
+        {aiExtractedData && (
+          <div className="ai-raw-data">
+            <button type="button" onClick={() => setShowRawAiData((prev) => !prev)}>
+              {showRawAiData ? 'AI解析の生データを隠す' : 'AI解析の生データを表示'}
+            </button>
+            {showRawAiData && (
+              <pre className="ai-raw-data-body">{JSON.stringify(aiExtractedData, null, 2)}</pre>
+            )}
+          </div>
+        )}
+      </fieldset>
 
       <fieldset className="calendar-fieldset">
         <legend>栽培暦(地域帯別)</legend>
