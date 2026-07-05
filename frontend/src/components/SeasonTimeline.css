@@ -1,0 +1,139 @@
+.season-timeline {
+  background: var(--map-bg, #f7f6f2);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  display: block;
+  width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  .season-timeline {
+    --map-bg: #1c1d24;
+  }
+}
+
+.season-timeline-empty {
+  padding: 2rem;
+  text-align: center;
+  border: 1px dashed var(--border, #e5e4e7);
+  border-radius: 8px;
+  color: var(--text, #6b6375);
+}
+
+.season-timeline-month line {
+  stroke: var(--border, #cfcdd6);
+  stroke-width: 1;
+}
+
+.season-timeline-month-label {
+  font-size: 11px;
+  fill: var(--text, #6b6375);
+}
+
+.season-timeline-header-rule {
+  stroke: var(--border, #cfcdd6);
+  stroke-width: 1;
+}
+
+.season-timeline-label-rule {
+  stroke: var(--border, #cfcdd6);
+  stroke-width: 1;
+}
+
+.season-timeline-bed-row-bg {
+  fill: var(--bg, #fff);
+  opacity: 0.5;
+}
+
+.season-timeline-bed-label {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--text-h, #08060d);
+  pointer-events: none;
+}
+
+.season-timeline-row-bg {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.season-timeline-row-bg--empty {
+  fill: var(--ring-base, #e5e4e7);
+  opacity: 0.35;
+}
+
+@media (prefers-color-scheme: dark) {
+  .season-timeline-row-bg--empty {
+    --ring-base: #33343d;
+  }
+}
+
+.season-timeline-segment-row--selected .season-timeline-row-bg {
+  fill: var(--accent-bg, rgba(170, 59, 255, 0.1));
+  opacity: 1;
+}
+
+.season-timeline-segment-label {
+  font-size: 11px;
+  fill: var(--text, #6b6375);
+  cursor: pointer;
+}
+
+.season-timeline-segment-row--selected .season-timeline-segment-label {
+  fill: var(--accent, #aa3bff);
+  font-weight: 700;
+}
+
+.season-timeline-bar-group {
+  cursor: pointer;
+}
+
+.season-timeline-bar {
+  stroke: #ffffff;
+  stroke-width: 1;
+}
+
+.season-timeline-segment-row--selected .season-timeline-bar {
+  stroke: var(--accent, #aa3bff);
+  stroke-width: 2;
+}
+
+.season-timeline-bar-label {
+  font-size: 10px;
+  fill: #ffffff;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 3px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.season-timeline-undated-marker-group {
+  cursor: pointer;
+}
+
+.season-timeline-undated-marker {
+  stroke: #ffffff;
+  stroke-width: 1;
+}
+
+.season-timeline-stage-icon-group {
+  cursor: pointer;
+}
+
+.season-timeline-stage-icon {
+  font-size: 11px;
+  user-select: none;
+}
+
+.season-timeline-today line {
+  stroke: var(--accent, #aa3bff);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+
+.season-timeline-today-label {
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--accent, #aa3bff);
+}

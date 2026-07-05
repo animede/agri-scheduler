@@ -14,8 +14,8 @@ import BedMap from '../components/BedMap'
 import BedForm from '../components/BedForm'
 import SegmentManager from '../components/SegmentManager'
 import SegmentDetailPanel from '../components/SegmentDetailPanel'
-import SeasonWheel from '../components/SeasonWheel'
-import type { SeasonWheelRingData } from '../components/SeasonWheel'
+import SeasonTimeline from '../components/SeasonTimeline'
+import type { SeasonTimelineBedGroup } from '../components/SeasonTimeline'
 import WeeklyTaskPanel from '../components/WeeklyTaskPanel'
 import RolloverReviewModal from '../components/RolloverReviewModal'
 import { pickCurrentPlanting } from '../utils/planting'
@@ -159,7 +159,7 @@ function FieldMapPage() {
   const bedById = useMemo(() => new Map(fieldBeds.map((b) => [b.id, b])), [fieldBeds])
 
   // この圃場に属する区画を「畝の並び順→畝内の開始位置順」で一列に並べたもの。
-  // 栽培カレンダー(SeasonWheel)で内側から外側へのリング割り当て順として使う。
+  // 今週の推奨作業サマリ・ロールオーバー計画など、区画を平坦なリストとして扱いたい箇所で使う。
   const fieldSegmentsOrdered = useMemo(() => {
     const result: BedSegment[] = []
     for (const bed of fieldBeds) {
@@ -199,16 +199,28 @@ function FieldMapPage() {
     return map
   }, [fieldTasks])
 
-  // 栽培カレンダー(SeasonWheel)のリング1本 = 区画1個。選択年のPlantingが無くても
-  // 区画自体は常にリングとして表示する(spec.md 4.6 / implementation-plan.md フェーズ7)。
-  const seasonWheelRings = useMemo<SeasonWheelRingData[]>(
+  // 栽培カレンダー(SeasonTimeline)の畝グループ表示順。畝はpos_y→pos_x→id順で安定させる
+  // (マップ上の配置と一致するとは限らないが、切り替えの度に順序が変わらないようにする)。
+  const fieldBedsOrdered = useMemo(
+    () => fieldBeds.slice().sort((a, b) => a.pos_y - b.pos_y || a.pos_x - b.pos_x || a.id - b.id),
+    [fieldBeds],
+  )
+
+  // 栽培カレンダー(SeasonTimeline)は畝ごとにグループ化した行を表示する。選択年のPlantingが
+  // 無くても区画自体は常に1行として表示する(spec.md 4.6 / implementation-plan.md フェーズ7)。
+  const seasonTimelineGroups = useMemo<SeasonTimelineBedGroup[]>(
     () =>
-      fieldSegmentsOrdered.map((segment) => ({
-        segment,
-        bedName: bedById.get(segment.bed_id)?.name ?? `畝#${segment.bed_id}`,
-        plantings: (plantingsBySegment.get(segment.id) ?? []).filter((p) => p.year === selectedYear),
+      fieldBedsOrdered.map((bed) => ({
+        bed,
+        segments: (segmentsByBed.get(bed.id) ?? [])
+          .slice()
+          .sort((a, b) => a.start_offset_m - b.start_offset_m)
+          .map((segment) => ({
+            segment,
+            plantings: (plantingsBySegment.get(segment.id) ?? []).filter((p) => p.year === selectedYear),
+          })),
       })),
-    [fieldSegmentsOrdered, bedById, plantingsBySegment, selectedYear],
+    [fieldBedsOrdered, segmentsByBed, plantingsBySegment, selectedYear],
   )
 
   // 「今週の推奨作業」サマリ(圃場マップ・栽培カレンダー両モード共通のヘッダー付近に表示)。
@@ -269,7 +281,7 @@ function FieldMapPage() {
     setSelectedSegmentId(segment.id)
   }
 
-  // SeasonWheelの円弧クリック/今週の推奨作業パネルのクリックは区画IDのみを渡してくるため、
+  // SeasonTimelineのバー/行クリック・今週の推奨作業パネルのクリックは区画IDのみを渡してくるため、
   // 対応するBedSegmentを引いてhandleSelectSegmentに委譲する(圃場マップとの双方向連動)。
   function handleSelectSegmentId(segmentId: number) {
     const segment = segmentById.get(segmentId)
@@ -371,8 +383,8 @@ function FieldMapPage() {
             </>
           ) : (
             <>
-              <SeasonWheel
-                rings={seasonWheelRings}
+              <SeasonTimeline
+                groups={seasonTimelineGroups}
                 year={selectedYear}
                 tasksByPlanting={tasksByPlanting}
                 lookups={lookups}
@@ -380,8 +392,9 @@ function FieldMapPage() {
                 onSelectSegment={handleSelectSegmentId}
               />
               <p className="muted map-legend-note">
-                内側から外側へ区画ごとに1本のリング。円弧は各作付けの推定作業期間(種蒔き〜収穫)を表し、
-                色は圃場マップと同じ科(CropFamily)ごとの色分けです。🌱種蒔き / 🌿植え付け / 🌾収穫。
+                畝ごとに区画を1行ずつ並べた横方向のタイムラインです。バーは各作付けの推定作業期間
+                (種蒔き〜収穫)を表し、色は圃場マップと同じ科(CropFamily)ごとの色分けです。
+                🌱種蒔き / 🌿植え付け / 🌾収穫。現在年を表示中は縦の点線が「今日」の位置を示します。
               </p>
             </>
           )}
