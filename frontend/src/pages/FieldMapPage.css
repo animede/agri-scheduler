@@ -6,6 +6,45 @@
   margin: 0.3rem 0;
 }
 
+.view-mode-toggle {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.view-mode-tab {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 999px;
+  background: var(--bg, #fff);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.view-mode-tab:hover {
+  border-color: var(--accent, #aa3bff);
+}
+
+.view-mode-tab--active {
+  border-color: var(--accent, #aa3bff);
+  background: var(--accent-bg, rgba(170, 59, 255, 0.1));
+  font-weight: 600;
+}
+
+.year-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.year-selector-label {
+  font-weight: 700;
+  min-width: 4.5em;
+  text-align: center;
+}
+
 .field-map-layout {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);

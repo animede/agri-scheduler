@@ -7,20 +7,27 @@ import { listPlantings } from '../api/plantings'
 import { listVarieties } from '../api/varieties'
 import { listCrops } from '../api/crops'
 import { listCropFamilies } from '../api/cropFamilies'
+import { listTasks } from '../api/tasks'
 import { ApiError } from '../api/client'
-import type { Bed, BedSegment, Crop, CropFamily, Field, Planting, Variety } from '../api/types'
+import type { Bed, BedSegment, Crop, CropFamily, Field, Planting, Task, Variety } from '../api/types'
 import BedMap from '../components/BedMap'
 import BedForm from '../components/BedForm'
 import SegmentManager from '../components/SegmentManager'
 import SegmentDetailPanel from '../components/SegmentDetailPanel'
+import SeasonWheel from '../components/SeasonWheel'
+import type { SeasonWheelRingData } from '../components/SeasonWheel'
+import WeeklyTaskPanel from '../components/WeeklyTaskPanel'
 import { pickCurrentPlanting } from '../utils/planting'
 import { resolveVariety } from '../utils/resolve'
 import { colorForCropFamily } from '../utils/cropFamilyColor'
 import { checkCurrentRotationRisk } from '../utils/rotation'
 import type { RotationCheckResult } from '../utils/rotation'
+import { buildWeeklyTasks } from '../utils/weeklyTasks'
 import './FieldMapPage.css'
 
 const CURRENT_YEAR = new Date().getFullYear()
+
+type ViewMode = 'map' | 'calendar'
 
 function FieldMapPage() {
   const { fieldId: fieldIdParam } = useParams<{ fieldId: string }>()
@@ -30,6 +37,7 @@ function FieldMapPage() {
   const [beds, setBeds] = useState<Bed[]>([])
   const [segments, setSegments] = useState<BedSegment[]>([])
   const [plantings, setPlantings] = useState<Planting[]>([])
+  const [tasks, setTasks] = useState<Task[]>([])
   const [varieties, setVarieties] = useState<Variety[]>([])
   const [crops, setCrops] = useState<Crop[]>([])
   const [cropFamilies, setCropFamilies] = useState<CropFamily[]>([])
@@ -43,24 +51,40 @@ function FieldMapPage() {
   const [selectedBedId, setSelectedBedId] = useState<number | null>(null)
   const [selectedSegmentId, setSelectedSegmentId] = useState<number | null>(null)
 
+  // フェーズ7: 圃場マップ⇔栽培カレンダーの表示切り替えと、カレンダーの対象年。
+  // 選択状態(selectedBedId/selectedSegmentId)は両モードで共有するため、モード切替や
+  // 年切替をしてもリセットしない。
+  const [viewMode, setViewMode] = useState<ViewMode>('map')
+  const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR)
+
   const loadAll = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
     try {
-      const [fieldData, bedsData, segmentsData, plantingsData, varietiesData, cropsData, cropFamiliesData] =
-        await Promise.all([
-          getField(fieldId),
-          listBeds(),
-          listBedSegments(),
-          listPlantings(),
-          listVarieties(),
-          listCrops(),
-          listCropFamilies(),
-        ])
+      const [
+        fieldData,
+        bedsData,
+        segmentsData,
+        plantingsData,
+        tasksData,
+        varietiesData,
+        cropsData,
+        cropFamiliesData,
+      ] = await Promise.all([
+        getField(fieldId),
+        listBeds(),
+        listBedSegments(),
+        listPlantings(),
+        listTasks(),
+        listVarieties(),
+        listCrops(),
+        listCropFamilies(),
+      ])
       setField(fieldData)
       setBeds(bedsData)
       setSegments(segmentsData)
       setPlantings(plantingsData)
+      setTasks(tasksData)
       setVarieties(varietiesData)
       setCrops(cropsData)
       setCropFamilies(cropFamiliesData)
@@ -75,18 +99,20 @@ function FieldMapPage() {
     void loadAll()
   }, [loadAll])
 
-  // 畝/区画/作付けの変更後の再読み込み(マスタ3種は変わらない前提で対象を絞る)
+  // 畝/区画/作付け/タスクの変更後の再読み込み(マスタ3種は変わらない前提で対象を絞る)
   const reloadMapData = useCallback(async () => {
     setReloadError(null)
     try {
-      const [bedsData, segmentsData, plantingsData] = await Promise.all([
+      const [bedsData, segmentsData, plantingsData, tasksData] = await Promise.all([
         listBeds(),
         listBedSegments(),
         listPlantings(),
+        listTasks(),
       ])
       setBeds(bedsData)
       setSegments(segmentsData)
       setPlantings(plantingsData)
+      setTasks(tasksData)
     } catch (err) {
       setReloadError(err instanceof ApiError ? err.message : '再読み込みに失敗しました')
     }
@@ -123,6 +149,67 @@ function FieldMapPage() {
       cropFamilyById: new Map(cropFamilies.map((f) => [f.id, f])),
     }),
     [varieties, crops, cropFamilies],
+  )
+
+  const bedById = useMemo(() => new Map(fieldBeds.map((b) => [b.id, b])), [fieldBeds])
+
+  // この圃場に属する区画を「畝の並び順→畝内の開始位置順」で一列に並べたもの。
+  // 栽培カレンダー(SeasonWheel)で内側から外側へのリング割り当て順として使う。
+  const fieldSegmentsOrdered = useMemo(() => {
+    const result: BedSegment[] = []
+    for (const bed of fieldBeds) {
+      const segs = (segmentsByBed.get(bed.id) ?? []).slice().sort((a, b) => a.start_offset_m - b.start_offset_m)
+      result.push(...segs)
+    }
+    return result
+  }, [fieldBeds, segmentsByBed])
+
+  const segmentById = useMemo(
+    () => new Map(fieldSegmentsOrdered.map((s) => [s.id, s])),
+    [fieldSegmentsOrdered],
+  )
+
+  // フィールド内の全Planting(年を問わない。今週の推奨作業サマリで使用)
+  const fieldPlantings = useMemo(
+    () => plantings.filter((p) => segmentById.has(p.bed_segment_id)),
+    [plantings, segmentById],
+  )
+  const plantingById = useMemo(() => new Map(fieldPlantings.map((p) => [p.id, p])), [fieldPlantings])
+
+  // フィールド内の全Plantingに紐づくTaskのみ抽出する。バックエンドはplanting_idでの
+  // クエリフィルタを提供していないため、全件取得してクライアント側で絞り込む
+  // (SegmentDetailPanel.tsxの実装と対になる)。
+  const fieldTasks = useMemo(
+    () => tasks.filter((t) => plantingById.has(t.planting_id)),
+    [tasks, plantingById],
+  )
+
+  const tasksByPlanting = useMemo(() => {
+    const map = new Map<number, Task[]>()
+    for (const t of fieldTasks) {
+      const list = map.get(t.planting_id) ?? []
+      list.push(t)
+      map.set(t.planting_id, list)
+    }
+    return map
+  }, [fieldTasks])
+
+  // 栽培カレンダー(SeasonWheel)のリング1本 = 区画1個。選択年のPlantingが無くても
+  // 区画自体は常にリングとして表示する(spec.md 4.6 / implementation-plan.md フェーズ7)。
+  const seasonWheelRings = useMemo<SeasonWheelRingData[]>(
+    () =>
+      fieldSegmentsOrdered.map((segment) => ({
+        segment,
+        bedName: bedById.get(segment.bed_id)?.name ?? `畝#${segment.bed_id}`,
+        plantings: (plantingsBySegment.get(segment.id) ?? []).filter((p) => p.year === selectedYear),
+      })),
+    [fieldSegmentsOrdered, bedById, plantingsBySegment, selectedYear],
+  )
+
+  // 「今週の推奨作業」サマリ(圃場マップ・栽培カレンダー両モード共通のヘッダー付近に表示)。
+  const weeklyTaskItems = useMemo(
+    () => buildWeeklyTasks(fieldTasks, plantingById, segmentById, bedById, lookups),
+    [fieldTasks, plantingById, segmentById, bedById, lookups],
   )
 
   const getSegmentColor = useCallback(
@@ -166,6 +253,13 @@ function FieldMapPage() {
     setSelectedSegmentId(segment.id)
   }
 
+  // SeasonWheelの円弧クリック/今週の推奨作業パネルのクリックは区画IDのみを渡してくるため、
+  // 対応するBedSegmentを引いてhandleSelectSegmentに委譲する(圃場マップとの双方向連動)。
+  function handleSelectSegmentId(segmentId: number) {
+    const segment = segmentById.get(segmentId)
+    if (segment) handleSelectSegment(segment)
+  }
+
   if (loading) {
     return (
       <main className="field-map-page">
@@ -194,25 +288,84 @@ function FieldMapPage() {
           {field.location_note ?? '場所メモなし'}
           {field.area_sqm != null ? ` / ${field.area_sqm}㎡` : ''}
         </p>
+
+        <div className="view-mode-toggle" role="tablist" aria-label="表示モード">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewMode === 'map'}
+            className={`view-mode-tab${viewMode === 'map' ? ' view-mode-tab--active' : ''}`}
+            onClick={() => setViewMode('map')}
+          >
+            🗺 圃場マップ
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewMode === 'calendar'}
+            className={`view-mode-tab${viewMode === 'calendar' ? ' view-mode-tab--active' : ''}`}
+            onClick={() => setViewMode('calendar')}
+          >
+            📅 栽培カレンダー
+          </button>
+        </div>
+
+        {viewMode === 'calendar' && (
+          <div className="year-selector">
+            <button type="button" onClick={() => setSelectedYear((y) => y - 1)} aria-label="前年">
+              ← 前年
+            </button>
+            <span className="year-selector-label">{selectedYear}年</span>
+            <button type="button" onClick={() => setSelectedYear((y) => y + 1)} aria-label="翌年">
+              翌年 →
+            </button>
+            {selectedYear !== CURRENT_YEAR && (
+              <button type="button" onClick={() => setSelectedYear(CURRENT_YEAR)}>
+                今年に戻る
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      <WeeklyTaskPanel items={weeklyTaskItems} onSelectSegment={handleSelectSegmentId} />
 
       {reloadError && <p className="form-error">{reloadError}</p>}
 
       <div className="field-map-layout">
         <div className="field-map-main">
-          <BedMap
-            beds={fieldBeds}
-            segmentsByBed={segmentsByBed}
-            getSegmentColor={getSegmentColor}
-            getSegmentRotationRisk={getSegmentRotationRisk}
-            selectedBedId={selectedBedId}
-            selectedSegmentId={selectedSegmentId}
-            onSelectBed={handleSelectBed}
-            onSelectSegment={handleSelectSegment}
-          />
-          <p className="muted map-legend-note">
-            色は「現在の作付け」の作物の科(CropFamily)ごとに自動で割り当てられます。グレーは空き区画です。
-          </p>
+          {viewMode === 'map' ? (
+            <>
+              <BedMap
+                beds={fieldBeds}
+                segmentsByBed={segmentsByBed}
+                getSegmentColor={getSegmentColor}
+                getSegmentRotationRisk={getSegmentRotationRisk}
+                selectedBedId={selectedBedId}
+                selectedSegmentId={selectedSegmentId}
+                onSelectBed={handleSelectBed}
+                onSelectSegment={handleSelectSegment}
+              />
+              <p className="muted map-legend-note">
+                色は「現在の作付け」の作物の科(CropFamily)ごとに自動で割り当てられます。グレーは空き区画です。
+              </p>
+            </>
+          ) : (
+            <>
+              <SeasonWheel
+                rings={seasonWheelRings}
+                year={selectedYear}
+                tasksByPlanting={tasksByPlanting}
+                lookups={lookups}
+                selectedSegmentId={selectedSegmentId}
+                onSelectSegment={handleSelectSegmentId}
+              />
+              <p className="muted map-legend-note">
+                内側から外側へ区画ごとに1本のリング。円弧は各作付けの推定作業期間(種蒔き〜収穫)を表し、
+                色は圃場マップと同じ科(CropFamily)ごとの色分けです。🌱種蒔き / 🌿植え付け / 🌾収穫。
+              </p>
+            </>
+          )}
         </div>
 
         <aside className="map-sidebar">

@@ -1,0 +1,59 @@
+.weekly-task-panel {
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 8px;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.weekly-task-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05em;
+}
+
+.weekly-task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.weekly-task-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 6px;
+  background: var(--bg, #fff);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.weekly-task-item:hover {
+  border-color: var(--accent, #aa3bff);
+}
+
+.weekly-task-item--overdue {
+  border-color: #d9534f;
+}
+
+.weekly-task-date {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--text, #6b6375);
+}
+
+.weekly-task-item--overdue .weekly-task-date {
+  color: #d9534f;
+}
+
+.weekly-task-main {
+  font-size: 0.9em;
+}
