@@ -118,3 +118,19 @@ export interface Planting {
 
 export type PlantingCreate = Omit<Planting, 'id'>
 export type PlantingUpdate = Partial<PlantingCreate>
+
+// Task（作業）: Plantingに紐づく個別の作業(種蒔き・畝立て・収穫等)。spec.md 4.4/4.8, ER概要参照。
+// planned_date_start/endは「推奨時期(範囲)」、actual_dateは実施日、is_completedは完了フラグ。
+export interface Task {
+  id: number
+  planting_id: number
+  task_type: string
+  planned_date_start: string | null
+  planned_date_end: string | null
+  actual_date: string | null
+  is_completed: boolean
+  notes: string | null
+}
+
+export type TaskCreate = Omit<Task, 'id'>
+export type TaskUpdate = Partial<TaskCreate>

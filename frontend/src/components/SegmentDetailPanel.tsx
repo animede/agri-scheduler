@@ -1,12 +1,16 @@
-import { useState } from 'react'
-import type { BedSegment, Planting, Variety } from '../api/types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { BedSegment, Planting, Task, Variety } from '../api/types'
 import { deletePlanting } from '../api/plantings'
+import { createTask, listTasks } from '../api/tasks'
 import { ApiError } from '../api/client'
 import { pickCurrentPlanting, sortHistory } from '../utils/planting'
 import { resolveVariety } from '../utils/resolve'
 import type { Lookups } from '../utils/resolve'
 import { checkCurrentRotationRisk } from '../utils/rotation'
+import { generateTasks } from '../utils/taskTemplate'
+import { getClimateZone } from '../utils/settings'
 import PlantingForm from './PlantingForm'
+import PlantingTaskSection from './PlantingTaskSection'
 
 interface SegmentDetailPanelProps {
   segment: BedSegment
@@ -38,12 +42,82 @@ function SegmentDetailPanel({
 }: SegmentDetailPanelProps) {
   const [mode, setMode] = useState<PanelMode>({ kind: 'view' })
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [taskGenError, setTaskGenError] = useState<string | null>(null)
+
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [tasksError, setTasksError] = useState<string | null>(null)
 
   const current = pickCurrentPlanting(plantings, currentYear)
   const history = sortHistory(plantings, current)
   const currentRisk = current
     ? checkCurrentRotationRisk(plantings, current, lookups)
     : ({ warning: false } as const)
+
+  // このPlanting群(=区画)に紐づくタスクのみを保持する。バックエンドにplanting_idでの
+  // フィルタが無いため、全件取得してクライアント側で絞り込む(api/tasks.tsの実装と対になる)。
+  const plantingIds = useMemo(() => new Set(plantings.map((p) => p.id)), [plantings])
+
+  const loadTasks = useCallback(async () => {
+    setTasksError(null)
+    try {
+      const all = await listTasks()
+      setTasks(all.filter((t) => plantingIds.has(t.planting_id)))
+    } catch (err) {
+      setTasksError(err instanceof ApiError ? err.message : 'タスクの読み込みに失敗しました')
+    }
+  }, [plantingIds])
+
+  useEffect(() => {
+    void loadTasks()
+  }, [loadTasks])
+
+  const tasksByPlanting = useMemo(() => {
+    const map = new Map<number, Task[]>()
+    for (const t of tasks) {
+      const list = map.get(t.planting_id) ?? []
+      list.push(t)
+      map.set(t.planting_id, list)
+    }
+    return map
+  }, [tasks])
+
+  // 作付け保存後の処理。新規作成時のみ、品種の栽培暦・気候帯からタスクを自動生成する
+  // (spec.md 4.4/4.8, implementation-plan.md フェーズ5)。編集時は自動生成しない
+  // (時期がずれた場合はPlantingTaskSectionの「作業タスクを再計算」で明示的に反映する)。
+  async function handlePlantingSaved(saved: Planting) {
+    const wasNew = mode.kind === 'new'
+    setMode({ kind: 'view' })
+    setTaskGenError(null)
+
+    if (wasNew) {
+      const variety = lookups.varietyById.get(saved.variety_id)
+      if (variety) {
+        try {
+          const drafts = generateTasks(saved, variety, getClimateZone())
+          await Promise.all(
+            drafts.map((d) =>
+              createTask({
+                planting_id: saved.id,
+                task_type: d.task_type,
+                planned_date_start: d.planned_date_start,
+                planned_date_end: d.planned_date_end,
+                actual_date: null,
+                is_completed: false,
+                notes: d.notes ?? null,
+              }),
+            ),
+          )
+        } catch (err) {
+          setTaskGenError(
+            err instanceof ApiError ? err.message : '作業タスクの自動生成に失敗しました',
+          )
+        }
+      }
+    }
+
+    onChanged()
+    void loadTasks()
+  }
 
   async function handleDelete(planting: Planting) {
     if (
@@ -78,10 +152,7 @@ function SegmentDetailPanel({
           existingPlantings={plantings}
           initialPlanting={mode.kind === 'edit' ? mode.planting : null}
           defaultYear={currentYear}
-          onSaved={() => {
-            setMode({ kind: 'view' })
-            onChanged()
-          }}
+          onSaved={(saved) => void handlePlantingSaved(saved)}
           onCancel={() => setMode({ kind: 'view' })}
           onDeleted={() => {
             setMode({ kind: 'view' })
@@ -106,6 +177,8 @@ function SegmentDetailPanel({
       </p>
 
       {deleteError && <p className="form-error">{deleteError}</p>}
+      {taskGenError && <p className="form-error">作業タスクの自動生成: {taskGenError}</p>}
+      {tasksError && <p className="form-error">{tasksError}</p>}
 
       <section>
         <h5>現在の作付け</h5>
@@ -131,6 +204,13 @@ function SegmentDetailPanel({
                 削除
               </button>
             </div>
+            <PlantingTaskSection
+              planting={current}
+              variety={lookups.varietyById.get(current.variety_id)}
+              tasks={tasksByPlanting.get(current.id) ?? []}
+              climateZone={getClimateZone()}
+              onTasksChanged={() => void loadTasks()}
+            />
           </>
         ) : (
           <p className="muted">現在の作付けはありません（空き区画）。</p>
@@ -149,21 +229,30 @@ function SegmentDetailPanel({
           <ul className="history-list">
             {history.map((p) => (
               <li key={p.id} className="history-row">
-                <span>
-                  {p.year}年: {describePlanting(p, lookups)} / {p.status}
-                </span>
-                <span className="segment-row-actions">
-                  <button type="button" onClick={() => setMode({ kind: 'edit', planting: p })}>
-                    編集
-                  </button>
-                  <button
-                    type="button"
-                    className="danger-button"
-                    onClick={() => void handleDelete(p)}
-                  >
-                    削除
-                  </button>
-                </span>
+                <div className="history-row-main">
+                  <span>
+                    {p.year}年: {describePlanting(p, lookups)} / {p.status}
+                  </span>
+                  <span className="segment-row-actions">
+                    <button type="button" onClick={() => setMode({ kind: 'edit', planting: p })}>
+                      編集
+                    </button>
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => void handleDelete(p)}
+                    >
+                      削除
+                    </button>
+                  </span>
+                </div>
+                <PlantingTaskSection
+                  planting={p}
+                  variety={lookups.varietyById.get(p.variety_id)}
+                  tasks={tasksByPlanting.get(p.id) ?? []}
+                  climateZone={getClimateZone()}
+                  onTasksChanged={() => void loadTasks()}
+                />
               </li>
             ))}
           </ul>
