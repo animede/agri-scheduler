@@ -10,3 +10,9 @@
   color: #2e7d32;
   align-self: center;
 }
+
+@media (prefers-color-scheme: dark) {
+  .settings-saved-message {
+    color: #6fcf7d;
+  }
+}

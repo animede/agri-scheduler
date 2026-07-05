@@ -13,5 +13,5 @@ router = make_crud_router(
     response_schema=BedResponse,
     prefix="/api/beds",
     tag="beds",
-    not_found_detail="Bed not found",
+    not_found_detail="畝が見つかりません",
 )

@@ -13,5 +13,5 @@ router = make_crud_router(
     response_schema=TaskResponse,
     prefix="/api/tasks",
     tag="tasks",
-    not_found_detail="Task not found",
+    not_found_detail="作業が見つかりません",
 )

@@ -13,5 +13,5 @@ router = make_crud_router(
     response_schema=FieldResponse,
     prefix="/api/fields",
     tag="fields",
-    not_found_detail="Field not found",
+    not_found_detail="圃場が見つかりません",
 )

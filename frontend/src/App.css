@@ -36,6 +36,15 @@ h1 {
   color: #b26a00;
 }
 
+@media (prefers-color-scheme: dark) {
+  .form-error {
+    color: #ff6b6b;
+  }
+  .form-warning {
+    color: #f0ad4e;
+  }
+}
+
 /* 過去年度アーカイブ表示(spec.md 4.7)での読み取り専用注記 */
 .readonly-note {
   padding: 0.4rem 0.6rem;
@@ -72,6 +81,13 @@ button[type='submit'] {
 .danger-button {
   color: #c62828;
   border-color: #c62828;
+}
+
+@media (prefers-color-scheme: dark) {
+  .danger-button {
+    color: #ff6b6b;
+    border-color: #ff6b6b;
+  }
 }
 
 .entity-form {

@@ -13,5 +13,5 @@ router = make_crud_router(
     response_schema=CropResponse,
     prefix="/api/crops",
     tag="crops",
-    not_found_detail="Crop not found",
+    not_found_detail="作物が見つかりません",
 )

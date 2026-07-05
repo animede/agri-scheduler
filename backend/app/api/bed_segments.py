@@ -13,5 +13,5 @@ router = make_crud_router(
     response_schema=BedSegmentResponse,
     prefix="/api/bed-segments",
     tag="bed-segments",
-    not_found_detail="BedSegment not found",
+    not_found_detail="区画が見つかりません",
 )

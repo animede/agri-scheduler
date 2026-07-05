@@ -13,5 +13,5 @@ router = make_crud_router(
     response_schema=PlantingResponse,
     prefix="/api/plantings",
     tag="plantings",
-    not_found_detail="Planting not found",
+    not_found_detail="作付けが見つかりません",
 )

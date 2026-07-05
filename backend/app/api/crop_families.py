@@ -13,5 +13,5 @@ router = make_crud_router(
     response_schema=CropFamilyResponse,
     prefix="/api/crop-families",
     tag="crop-families",
-    not_found_detail="CropFamily not found",
+    not_found_detail="科マスタが見つかりません",
 )

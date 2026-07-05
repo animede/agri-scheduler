@@ -28,6 +28,9 @@ data/db/*.sqlite3
 *.db
 *.sqlite3
 
+# --- Backups (scripts/backup.sh output; local-only, never committed) ---
+backups/
+
 # --- Editor / OS ---
 .DS_Store
 .vscode/

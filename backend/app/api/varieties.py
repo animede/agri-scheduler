@@ -13,5 +13,5 @@ router = make_crud_router(
     response_schema=VarietyResponse,
     prefix="/api/varieties",
     tag="varieties",
-    not_found_detail="Variety not found",
+    not_found_detail="品種が見つかりません",
 )

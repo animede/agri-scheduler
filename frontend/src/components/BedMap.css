@@ -26,6 +26,12 @@
   fill: none;
 }
 
+@media (prefers-color-scheme: dark) {
+  .bed-rect {
+    stroke: #8a8d99;
+  }
+}
+
 .bed-rect--selected {
   stroke: var(--accent, #aa3bff);
   stroke-width: 3;
