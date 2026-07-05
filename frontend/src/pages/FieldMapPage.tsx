@@ -363,7 +363,7 @@ function FieldMapPage() {
 
       {reloadError && <p className="form-error">{reloadError}</p>}
 
-      <div className="field-map-layout">
+      <div className={`field-map-layout${viewMode === 'calendar' ? ' field-map-layout--calendar' : ''}`}>
         <div className="field-map-main">
           {viewMode === 'map' ? (
             <>
@@ -401,97 +401,101 @@ function FieldMapPage() {
         </div>
 
         <aside className="map-sidebar">
-          {!creatingBed && (
-            <button type="button" onClick={() => setCreatingBed(true)}>
-              + 畝を追加
-            </button>
-          )}
-          {creatingBed && (
-            <BedForm
-              fieldId={fieldId}
-              onSaved={(bed) => {
-                setCreatingBed(false)
-                setSelectedBedId(bed.id)
-                setSelectedSegmentId(null)
-                void reloadMapData()
-              }}
-              onCancel={() => setCreatingBed(false)}
-            />
-          )}
+          <div className="sidebar-group sidebar-group--beds">
+            {!creatingBed && (
+              <button type="button" onClick={() => setCreatingBed(true)}>
+                + 畝を追加
+              </button>
+            )}
+            {creatingBed && (
+              <BedForm
+                fieldId={fieldId}
+                onSaved={(bed) => {
+                  setCreatingBed(false)
+                  setSelectedBedId(bed.id)
+                  setSelectedSegmentId(null)
+                  void reloadMapData()
+                }}
+                onCancel={() => setCreatingBed(false)}
+              />
+            )}
 
-          {selectedBed && (
-            <div className="selected-bed-panel">
-              <div className="panel-header">
-                <h3>{selectedBed.name}</h3>
-                <div className="panel-header-actions">
-                  {editingBedId !== selectedBed.id && (
-                    <button type="button" onClick={() => setEditingBedId(selectedBed.id)}>
-                      編集
+            {selectedBed && (
+              <div className="selected-bed-panel">
+                <div className="panel-header">
+                  <h3>{selectedBed.name}</h3>
+                  <div className="panel-header-actions">
+                    {editingBedId !== selectedBed.id && (
+                      <button type="button" onClick={() => setEditingBedId(selectedBed.id)}>
+                        編集
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedBedId(null)
+                        setSelectedSegmentId(null)
+                        setEditingBedId(null)
+                      }}
+                    >
+                      選択解除
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
+                  </div>
+                </div>
+                <p className="muted">
+                  長さ{selectedBed.length_m}m / 幅{selectedBed.width_cm}cm / 向き:{' '}
+                  {selectedBed.orientation === 'vertical' ? 'vertical(縦)' : 'horizontal(横)'} / 座標(
+                  {selectedBed.pos_x}, {selectedBed.pos_y})
+                </p>
+
+                {editingBedId === selectedBed.id && (
+                  <BedForm
+                    fieldId={fieldId}
+                    initialBed={selectedBed}
+                    onSaved={() => {
+                      setEditingBedId(null)
+                      void reloadMapData()
+                    }}
+                    onCancel={() => setEditingBedId(null)}
+                    onDeleted={() => {
+                      setEditingBedId(null)
                       setSelectedBedId(null)
                       setSelectedSegmentId(null)
-                      setEditingBedId(null)
+                      void reloadMapData()
                     }}
-                  >
-                    選択解除
-                  </button>
-                </div>
-              </div>
-              <p className="muted">
-                長さ{selectedBed.length_m}m / 幅{selectedBed.width_cm}cm / 向き:{' '}
-                {selectedBed.orientation === 'vertical' ? 'vertical(縦)' : 'horizontal(横)'} / 座標(
-                {selectedBed.pos_x}, {selectedBed.pos_y})
-              </p>
+                  />
+                )}
 
-              {editingBedId === selectedBed.id && (
-                <BedForm
-                  fieldId={fieldId}
-                  initialBed={selectedBed}
-                  onSaved={() => {
-                    setEditingBedId(null)
-                    void reloadMapData()
-                  }}
-                  onCancel={() => setEditingBedId(null)}
-                  onDeleted={() => {
-                    setEditingBedId(null)
-                    setSelectedBedId(null)
-                    setSelectedSegmentId(null)
-                    void reloadMapData()
-                  }}
+                <SegmentManager
+                  bed={selectedBed}
+                  segments={selectedBedSegments}
+                  selectedSegmentId={selectedSegmentId}
+                  onSelectSegment={(segment) => setSelectedSegmentId(segment.id)}
+                  onChanged={() => void reloadMapData()}
                 />
-              )}
+              </div>
+            )}
 
-              <SegmentManager
-                bed={selectedBed}
-                segments={selectedBedSegments}
-                selectedSegmentId={selectedSegmentId}
-                onSelectSegment={(segment) => setSelectedSegmentId(segment.id)}
-                onChanged={() => void reloadMapData()}
-              />
-            </div>
-          )}
+            {!selectedBed && !creatingBed && (
+              <p className="muted">
+                マップ上の畝をクリックして選択するか、「+ 畝を追加」から新規作成してください。
+              </p>
+            )}
+          </div>
 
           {selectedSegment && (
-            <SegmentDetailPanel
-              segment={selectedSegment}
-              plantings={selectedSegmentPlantings}
-              varieties={varieties}
-              lookups={lookups}
-              currentYear={CURRENT_YEAR}
-              onClose={() => setSelectedSegmentId(null)}
-              onChanged={() => void reloadMapData()}
-              readOnly={selectedYear < CURRENT_YEAR}
-            />
-          )}
-
-          {!selectedBed && !creatingBed && (
-            <p className="muted">
-              マップ上の畝をクリックして選択するか、「+ 畝を追加」から新規作成してください。
-            </p>
+            <div className="sidebar-group sidebar-group--segment">
+              <SegmentDetailPanel
+                segment={selectedSegment}
+                plantings={selectedSegmentPlantings}
+                varieties={varieties}
+                lookups={lookups}
+                currentYear={CURRENT_YEAR}
+                onClose={() => setSelectedSegmentId(null)}
+                onChanged={() => void reloadMapData()}
+                readOnly={selectedYear < CURRENT_YEAR}
+              />
+            </div>
           )}
         </aside>
       </div>

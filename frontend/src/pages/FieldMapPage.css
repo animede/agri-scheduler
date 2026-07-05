@@ -58,10 +58,17 @@
   }
 }
 
+/* 栽培カレンダー(タイムライン)表示時は、タイムラインを横幅いっぱいに広げ、
+   畝・区画の設定パネルはその下に横並びで配置する(圃場マップ表示時のレイアウトは変更しない)。 */
+.field-map-layout--calendar {
+  grid-template-columns: 1fr;
+}
+
 .field-map-main {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .map-legend-note {
@@ -74,6 +81,24 @@
   gap: 0.5rem;
   position: sticky;
   top: 1rem;
+}
+
+.field-map-layout--calendar .map-sidebar {
+  position: static;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.field-map-layout--calendar .sidebar-group {
+  flex: 1 1 320px;
+  min-width: 300px;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .selected-bed-panel {
