@@ -36,6 +36,14 @@ h1 {
   color: #b26a00;
 }
 
+/* 過去年度アーカイブ表示(spec.md 4.7)での読み取り専用注記 */
+.readonly-note {
+  padding: 0.4rem 0.6rem;
+  border: 1px dashed var(--border, #e5e4e7);
+  border-radius: 6px;
+  background: var(--code-bg, #f4f3ec);
+}
+
 button {
   font: inherit;
   cursor: pointer;

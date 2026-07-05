@@ -17,12 +17,14 @@ import SegmentDetailPanel from '../components/SegmentDetailPanel'
 import SeasonWheel from '../components/SeasonWheel'
 import type { SeasonWheelRingData } from '../components/SeasonWheel'
 import WeeklyTaskPanel from '../components/WeeklyTaskPanel'
+import RolloverReviewModal from '../components/RolloverReviewModal'
 import { pickCurrentPlanting } from '../utils/planting'
 import { resolveVariety } from '../utils/resolve'
 import { colorForCropFamily } from '../utils/cropFamilyColor'
 import { checkCurrentRotationRisk } from '../utils/rotation'
 import type { RotationCheckResult } from '../utils/rotation'
 import { buildWeeklyTasks } from '../utils/weeklyTasks'
+import { buildRolloverPlan } from '../utils/rollover'
 import './FieldMapPage.css'
 
 const CURRENT_YEAR = new Date().getFullYear()
@@ -56,6 +58,9 @@ function FieldMapPage() {
   // 年切替をしてもリセットしない。
   const [viewMode, setViewMode] = useState<ViewMode>('map')
   const [selectedYear, setSelectedYear] = useState(CURRENT_YEAR)
+
+  // フェーズ8: 「次年度にロール」レビューモーダルの開閉状態。
+  const [showRolloverModal, setShowRolloverModal] = useState(false)
 
   const loadAll = useCallback(async () => {
     setLoading(true)
@@ -212,6 +217,17 @@ function FieldMapPage() {
     [fieldTasks, plantingById, segmentById, bedById, lookups],
   )
 
+  const bedNameForSegment = useCallback(
+    (segment: BedSegment) => bedById.get(segment.bed_id)?.name ?? `畝#${segment.bed_id}`,
+    [bedById],
+  )
+
+  // フェーズ8: 「次年度にロール」のレビュー対象一覧。selectedYearに作付けがある区画のみを対象とする。
+  const rolloverRows = useMemo(
+    () => buildRolloverPlan(fieldSegmentsOrdered, plantingsBySegment, varieties, lookups, selectedYear),
+    [fieldSegmentsOrdered, plantingsBySegment, varieties, lookups, selectedYear],
+  )
+
   const getSegmentColor = useCallback(
     (segment: BedSegment): string | null => {
       const segPlantings = plantingsBySegment.get(segment.id) ?? []
@@ -324,6 +340,9 @@ function FieldMapPage() {
                 今年に戻る
               </button>
             )}
+            <button type="button" onClick={() => setShowRolloverModal(true)}>
+              次年度にロール
+            </button>
           </div>
         )}
       </div>
@@ -452,6 +471,7 @@ function FieldMapPage() {
               currentYear={CURRENT_YEAR}
               onClose={() => setSelectedSegmentId(null)}
               onChanged={() => void reloadMapData()}
+              readOnly={selectedYear < CURRENT_YEAR}
             />
           )}
 
@@ -462,6 +482,23 @@ function FieldMapPage() {
           )}
         </aside>
       </div>
+
+      {showRolloverModal && (
+        <RolloverReviewModal
+          rows={rolloverRows}
+          year={selectedYear}
+          plantingsBySegment={plantingsBySegment}
+          varieties={varieties}
+          lookups={lookups}
+          bedNameFor={bedNameForSegment}
+          onClose={() => setShowRolloverModal(false)}
+          onCreated={() => void reloadMapData()}
+          onAllDone={(nextYear) => {
+            setSelectedYear(nextYear)
+            setShowRolloverModal(false)
+          }}
+        />
+      )}
     </main>
   )
 }

@@ -21,6 +21,10 @@ interface SegmentDetailPanelProps {
   onClose: () => void
   // 作付けの登録・編集・削除後に呼ばれる。呼び出し側で一覧の再読み込みを行う想定。
   onChanged: () => void
+  // 過去年度のアーカイブ表示時にtrue(spec.md 4.7)。作付けの登録・編集・削除、
+  // タスクの完了チェック・実績日入力・追加・削除・再計算といった変更系操作をすべて無効化し、
+  // 閲覧のみ可能にする。呼び出し側(FieldMapPage)からselectedYear < 実際の現在年で渡される想定。
+  readOnly?: boolean
 }
 
 type PanelMode = { kind: 'view' } | { kind: 'new' } | { kind: 'edit'; planting: Planting }
@@ -39,6 +43,7 @@ function SegmentDetailPanel({
   currentYear,
   onClose,
   onChanged,
+  readOnly = false,
 }: SegmentDetailPanelProps) {
   const [mode, setMode] = useState<PanelMode>({ kind: 'view' })
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -136,7 +141,7 @@ function SegmentDetailPanel({
     }
   }
 
-  if (mode.kind !== 'view') {
+  if (mode.kind !== 'view' && !readOnly) {
     return (
       <div className="segment-detail-panel">
         <div className="panel-header">
@@ -176,6 +181,12 @@ function SegmentDetailPanel({
         {segment.length_m}m）
       </p>
 
+      {readOnly && (
+        <p className="muted readonly-note">
+          過去年度のためこの年のデータは読み取り専用です。
+        </p>
+      )}
+
       {deleteError && <p className="form-error">{deleteError}</p>}
       {taskGenError && <p className="form-error">作業タスクの自動生成: {taskGenError}</p>}
       {tasksError && <p className="form-error">{tasksError}</p>}
@@ -192,24 +203,27 @@ function SegmentDetailPanel({
                 ⚠ {currentRisk.message}
               </p>
             )}
-            <div className="form-actions">
-              <button type="button" onClick={() => setMode({ kind: 'edit', planting: current })}>
-                編集
-              </button>
-              <button
-                type="button"
-                className="danger-button"
-                onClick={() => void handleDelete(current)}
-              >
-                削除
-              </button>
-            </div>
+            {!readOnly && (
+              <div className="form-actions">
+                <button type="button" onClick={() => setMode({ kind: 'edit', planting: current })}>
+                  編集
+                </button>
+                <button
+                  type="button"
+                  className="danger-button"
+                  onClick={() => void handleDelete(current)}
+                >
+                  削除
+                </button>
+              </div>
+            )}
             <PlantingTaskSection
               planting={current}
               variety={lookups.varietyById.get(current.variety_id)}
               tasks={tasksByPlanting.get(current.id) ?? []}
               climateZone={getClimateZone()}
               onTasksChanged={() => void loadTasks()}
+              readOnly={readOnly}
             />
           </>
         ) : (
@@ -217,9 +231,11 @@ function SegmentDetailPanel({
         )}
       </section>
 
-      <button type="button" onClick={() => setMode({ kind: 'new' })}>
-        + 作付けを登録
-      </button>
+      {!readOnly && (
+        <button type="button" onClick={() => setMode({ kind: 'new' })}>
+          + 作付けを登録
+        </button>
+      )}
 
       <section>
         <h5>過去の作付け履歴</h5>
@@ -233,18 +249,20 @@ function SegmentDetailPanel({
                   <span>
                     {p.year}年: {describePlanting(p, lookups)} / {p.status}
                   </span>
-                  <span className="segment-row-actions">
-                    <button type="button" onClick={() => setMode({ kind: 'edit', planting: p })}>
-                      編集
-                    </button>
-                    <button
-                      type="button"
-                      className="danger-button"
-                      onClick={() => void handleDelete(p)}
-                    >
-                      削除
-                    </button>
-                  </span>
+                  {!readOnly && (
+                    <span className="segment-row-actions">
+                      <button type="button" onClick={() => setMode({ kind: 'edit', planting: p })}>
+                        編集
+                      </button>
+                      <button
+                        type="button"
+                        className="danger-button"
+                        onClick={() => void handleDelete(p)}
+                      >
+                        削除
+                      </button>
+                    </span>
+                  )}
                 </div>
                 <PlantingTaskSection
                   planting={p}
@@ -252,6 +270,7 @@ function SegmentDetailPanel({
                   tasks={tasksByPlanting.get(p.id) ?? []}
                   climateZone={getClimateZone()}
                   onTasksChanged={() => void loadTasks()}
+                  readOnly={readOnly}
                 />
               </li>
             ))}

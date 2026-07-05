@@ -13,6 +13,9 @@ interface PlantingTaskSectionProps {
   // タスクの追加/更新/削除/再計算のいずれかが成功した後に呼ばれる。
   // 呼び出し側(SegmentDetailPanel)でタスク一覧の再読み込みを行う想定。
   onTasksChanged: () => void
+  // 過去年度のアーカイブ表示時にtrue(spec.md 4.7)。完了チェック・実績日入力・メモ編集・
+  // 追加・削除・再計算をすべて無効化し、閲覧のみ可能にする。
+  readOnly?: boolean
 }
 
 // 日付なし(null)は末尾に回して、planned_date_start昇順で並べる(未定タスクは下に表示)。
@@ -31,6 +34,7 @@ function PlantingTaskSection({
   tasks,
   climateZone,
   onTasksChanged,
+  readOnly = false,
 }: PlantingTaskSectionProps) {
   const [expanded, setExpanded] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -184,7 +188,7 @@ function PlantingTaskSection({
                     <input
                       type="checkbox"
                       checked={task.is_completed}
-                      disabled={busyTaskId === task.id}
+                      disabled={readOnly || busyTaskId === task.id}
                       onChange={() => void toggleCompleted(task)}
                     />
                     <span className="task-type">{task.task_type}</span>
@@ -200,7 +204,7 @@ function PlantingTaskSection({
                     <input
                       type="date"
                       value={task.actual_date ?? ''}
-                      disabled={busyTaskId === task.id}
+                      disabled={readOnly || busyTaskId === task.id}
                       onChange={(e) => void updateActualDate(task, e.target.value)}
                     />
                   </label>
@@ -209,43 +213,53 @@ function PlantingTaskSection({
                     type="text"
                     placeholder="メモ"
                     defaultValue={task.notes ?? ''}
-                    disabled={busyTaskId === task.id}
+                    disabled={readOnly || busyTaskId === task.id}
                     onBlur={(e) => void updateNotes(task, e.target.value)}
                   />
-                  <button
-                    type="button"
-                    className="danger-button"
-                    disabled={busyTaskId === task.id}
-                    onClick={() => void handleDelete(task)}
-                  >
-                    削除
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className="danger-button"
+                      disabled={busyTaskId === task.id}
+                      onClick={() => void handleDelete(task)}
+                    >
+                      削除
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
           )}
 
-          <div className="task-section-actions">
-            <button
-              type="button"
-              onClick={() => void handleRecalculate()}
-              disabled={recalculating || !variety}
-              title={
-                variety
-                  ? '完了していないタスクの予定日を、現在の実績/計画/栽培暦から再計算します'
-                  : '品種情報が取得できないため再計算できません'
-              }
-            >
-              {recalculating ? '再計算中...' : '作業タスクを再計算'}
-            </button>
-            {!showAddForm ? (
-              <button type="button" onClick={() => setShowAddForm(true)}>
-                ＋タスクを追加
-              </button>
-            ) : null}
-          </div>
+          {readOnly && (
+            <p className="muted readonly-note">
+              過去年度のためこの年のデータは読み取り専用です。
+            </p>
+          )}
 
-          {showAddForm && (
+          {!readOnly && (
+            <div className="task-section-actions">
+              <button
+                type="button"
+                onClick={() => void handleRecalculate()}
+                disabled={recalculating || !variety}
+                title={
+                  variety
+                    ? '完了していないタスクの予定日を、現在の実績/計画/栽培暦から再計算します'
+                    : '品種情報が取得できないため再計算できません'
+                }
+              >
+                {recalculating ? '再計算中...' : '作業タスクを再計算'}
+              </button>
+              {!showAddForm ? (
+                <button type="button" onClick={() => setShowAddForm(true)}>
+                  ＋タスクを追加
+                </button>
+              ) : null}
+            </div>
+          )}
+
+          {!readOnly && showAddForm && (
             <form className="entity-form entity-form--compact" onSubmit={handleAddCustomTask}>
               <label>
                 タスク名

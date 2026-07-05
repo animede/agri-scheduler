@@ -1,0 +1,89 @@
+.rollover-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1rem;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.rollover-modal {
+  background: var(--bg, #fff);
+  color: inherit;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  width: min(900px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  box-shadow: var(--shadow);
+}
+
+.rollover-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rollover-modal-header h3 {
+  margin: 0;
+}
+
+.rollover-table-wrap {
+  overflow-x: auto;
+}
+
+.rollover-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85em;
+}
+
+.rollover-table th,
+.rollover-table td {
+  border: 1px solid var(--border, #e5e4e7);
+  padding: 0.45rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.rollover-table th {
+  background: var(--code-bg, #f4f3ec);
+}
+
+.rollover-table select {
+  font: inherit;
+  max-width: 16em;
+}
+
+.rollover-status {
+  margin: 0 0 0.25rem;
+}
+
+.rollover-status--ok {
+  color: #2f7a3e;
+}
+
+.rollover-status--warning,
+.rollover-status--danger {
+  color: #8a5a00;
+}
+
+.rollover-status--info {
+  color: var(--text, #6b6375);
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rollover-status--ok {
+    color: #6fcf7d;
+  }
+  .rollover-status--warning,
+  .rollover-status--danger {
+    color: #f0ad4e;
+  }
+}
