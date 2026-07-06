@@ -46,6 +46,9 @@ agri-scheduler/
 - Python 3.12 系 / [uv](https://docs.astral.sh/uv/)
 - Node.js 20系以上 / npm
 
+Linux / macOS / Windows のいずれでも動作する。Windowsの場合は下記の
+「起動方法」「バックアップ方法」で PowerShell 版スクリプト(`.ps1`)を使う。
+
 ### backend
 
 ```
@@ -64,14 +67,29 @@ npm install    # 依存パッケージのインストール(初回のみ)
 
 ### まとめて起動(推奨)
 
+Linux / macOS:
+
 ```
 ./scripts/dev.sh
+```
+
+Windows (PowerShell):
+
+```
+./scripts/dev.ps1
 ```
 
 backend (http://localhost:8000) と frontend (http://localhost:5173) をまとめて起動する。
 `Ctrl+C` で両方停止する。
 
+> Windowsで「このシステムではスクリプトの実行が無効になっている」等のエラーが出る場合は、
+> `powershell -ExecutionPolicy Bypass -File .\scripts\dev.ps1` で実行するか、
+> 一度だけ `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` を実行して許可する。
+> (Git Bash や WSL を使う場合は `.sh` 版をそのまま実行できる。)
+
 ### 個別に起動する場合
+
+OS共通(Windowsも同じコマンドでよい。ターミナルを2つ開く):
 
 ```
 # backend
@@ -142,8 +160,16 @@ AI_VISION_MODEL=unsloth/gemma-4-31B-it-GGUF:Q4_K_XL
 
 ### バックアップ方法
 
+Linux / macOS:
+
 ```
 ./scripts/backup.sh
+```
+
+Windows (PowerShell):
+
+```
+./scripts/backup.ps1
 ```
 
 `data/db/agri.db` と `data/images/` を、実行時刻のタイムスタンプ付きディレクトリ
